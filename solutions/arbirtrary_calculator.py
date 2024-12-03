@@ -2,36 +2,49 @@ class ArbitraryCalculator:
     def __init__(self):
         pass
 
-    # Performing additions
+    # Perform addition of two large numbers
     def addition(self, num1, num2):
         result = []
         carry = 0
-        num1 = num1[::1]
-        num2 = num2[::2]
 
+        # Reverse both numbers to perform addition from the least significant digit
+        num1 = num1[::-1]
+        num2 = num2[::-1]
+
+        # Iterate through the digits
         for i in range(max(len(num1), len(num2))):
-            dig1 = int(num1[i] if i < len(num1) else 0)
-            dig2 = int(num2[i] if i < len(num2) else 0)
+            dig1 = int(num1[i]) if i < len(num1) else 0  # Get digit or 0 if out of range
+            dig2 = int(num2[i]) if i < len(num2) else 0  # Get digit or 0 if out of range
 
+            # Calculate the sum and carry
             total = dig1 + dig2 + carry
-            result.append(total % 10)
+            result.append(total % 10)  # Append current digit
+            carry = total // 10  # Update carry
 
-            carry = total // 10
+        # Add any remaining carry
+        if carry:
+            result.append(carry)
 
-    # Performing subtractions
+        # Reverse back to original order and join digits into a string
+        return ''.join(map(str, result[::-1]))
+
+    # Perform subtraction of two large numbers
     def subtract(self, num1, num2):
-        if self.compare(num1, num2) < 0:
+        if self.compare(num1, num2) < 0:  # Handle negative result
             return "-" + self.subtract(num2, num1)
 
         result = []
-
         borrow = 0
+
+        # Reverse both numbers for easier subtraction
         num1, num2 = num1[::-1], num2[::-1]
 
+        # Iterate through the digits of num1
         for i in range(len(num1)):
             digit1 = int(num1[i])
             digit2 = int(num2[i]) if i < len(num2) else 0
 
+            # Perform subtraction considering borrow
             diff = digit1 - digit2 - borrow
             if diff < 0:
                 diff += 10
@@ -41,38 +54,43 @@ class ArbitraryCalculator:
 
             result.append(diff)
 
-        while result[-1] == 0 and len(result) > 1:
+        # Remove leading zeros
+        while len(result) > 1 and result[-1] == 0:
             result.pop()
 
+        # Reverse back to original order
         return ''.join(map(str, result[::-1]))
 
-    # Performing multiplication
+    # Perform multiplication of two large numbers
     def multiply(self, num1, num2):
         num1, num2 = num1[::-1], num2[::-1]
-        result = [0] * (len(num1) + len(num2))
+        result = [0] * (len(num1) + len(num2))  # Initialize result array
 
+        # Perform digit-wise multiplication
         for i in range(len(num1)):
             for j in range(len(num2)):
                 result[i + j] += int(num1[i]) * int(num2[j])
-                result[i + j + 1] += result[i + j] // 10
-                result[i + j] %= 10
+                result[i + j + 1] += result[i + j] // 10  # Handle carry
+                result[i + j] %= 10  # Retain only single digit
 
-        while result[-1] == 0 and len(result) > 1:
+        # Remove leading zeros
+        while len(result) > 1 and result[-1] == 0:
             result.pop()
 
+        # Convert result array to string
         return ''.join(map(str, result[::-1]))
 
-    # Performing division
+    # Perform division of two large numbers
     def divide(self, num1, num2):
         if num2 == "0":
-            # Error handling to avoid program crash
-            raise ValueError("Division by zero is undefined.")
+            raise ValueError("Division by zero is undefined.")  # Handle division by zero
 
         quotient = []
         remainder = "0"
 
+        # Perform division digit by digit
         for digit in num1:
-            remainder = self.add(self.multiply(remainder, "10"), digit)
+            remainder = self.addition(self.multiply(remainder, "10"), digit)
             count = 0
             while self.compare(remainder, num2) >= 0:
                 remainder = self.subtract(remainder, num2)
@@ -81,16 +99,19 @@ class ArbitraryCalculator:
 
         return ''.join(map(str, quotient)).lstrip("0") or "0", remainder
 
+    # Compute factorial of a large number
     def factorial(self, num):
         result = "1"
         counter = "1"
 
+        # Multiply result by counter until counter exceeds num
         while self.compare(counter, num) <= 0:
             result = self.multiply(result, counter)
-            counter = self.add(counter, "1")
+            counter = self.addition(counter, "1")
 
         return result
 
+    # Compare two large numbers (returns -1, 0, 1)
     def compare(self, num1, num2):
         if len(num1) != len(num2):
             return len(num1) - len(num2)
@@ -99,6 +120,7 @@ class ArbitraryCalculator:
                 return int(num1[i]) - int(num2[i])
         return 0
 
+    # Evaluate mathematical expressions
     def evaluate(self, expression):
         try:
             if "!" in expression:
@@ -106,7 +128,7 @@ class ArbitraryCalculator:
                 return self.factorial(num)
             elif "+" in expression:
                 num1, num2 = expression.split("+")
-                return self.add(num1.strip(), num2.strip())
+                return self.addition(num1.strip(), num2.strip())
             elif "-" in expression:
                 num1, num2 = expression.split("-")
                 return self.subtract(num1.strip(), num2.strip())
@@ -122,6 +144,7 @@ class ArbitraryCalculator:
         except Exception as e:
             return f"Error: {e}"
 
+    # Run a REPL for user input
     def repl(self):
         print("Arbitrary Precision Calculator (type 'exit' to quit)")
         while True:
@@ -132,22 +155,7 @@ class ArbitraryCalculator:
             print(result)
 
 
+# Example usage
 if __name__ == "__main__":
     calc = ArbitraryCalculator()
     calc.repl()
-    # Perform addition
-    print(calc.addition("123456789123456789", "987654321987654321"))  # Output: 1111111111111111110
-
-    # Perform subtraction
-    print(calc.subtract("1000", "999"))  # Output: 1
-
-    # Perform multiplication
-    print(calc.multiply("12345", "67890"))  # Output: 838102050
-
-    # Perform division
-    quotient, remainder = calc.divide("123456789", "10000")
-    print(f"Quotient: {quotient}, Remainder: {remainder}")  # Output: Quotient: 12345, Remainder: 6789
-
-    # Compute factorial
-    print(calc.factorial("10"))  # Output: 3628800
-    
